@@ -50,6 +50,7 @@ function buildTokenKeyboard(selecionados = []) {
     )];
   });
   botoes.push([Markup.button.callback('▶️  Confirmar seleção', 'confirmar_tokens')]);
+  botoes.push([Markup.button.callback('✏️ Precisa corrigir algo?', 'menu_corrigir')]);
   return Markup.inlineKeyboard(botoes);
 }
 
@@ -83,44 +84,36 @@ async function enviarBoasVindas(ctx, telegramId) {
 
 // ─── PEDIR VALOR DO PRÓXIMO TOKEN ───────────────────────────
 
-async function pedirProximoValor(ctx, selecionados, index) {
+async function pedirProximoValor(ctx, selecionados, index, session = null) {
   const token = TOKENS_ATIVOS.find(t => t.id === selecionados[index]);
   await typing(ctx, 900);
+
+  // Se já há algum valor preenchido (index > 0), mostra botão contextual completo
+  const teclado = index > 0 && session
+    ? btnCorrigirComExtra([])
+    : btnCorrigir();
+
   await ctx.reply(
     `Qual o valor da sua participação em *${token.nome}*? 💰\n\n` +
     `_Digite somente o número. Ex: 500_\n` +
     `_(Mínimo R$100,00 | Somente múltiplos de R$100,00)_`,
-    { parse_mode: 'Markdown', ...btnCorrigir() }
+    { parse_mode: 'Markdown', ...teclado }
   );
 }
 
-// ─── MENU DE CORREÇÃO (contextual por etapa) ─────────────────
+// ─── MENU DE CORREÇÃO ────────────────────────────────────────
 
-async function mostrarMenuCorrigir(ctx, session) {
-  const estado = session?.estado || '';
-  const temValores = session?.valores_tokens && Object.keys(session.valores_tokens).length > 0;
-  const temNome    = !!session?.nome;
-  const temEmail   = !!session?.email_bdm;
-
-  const botoes = [];
-
-  botoes.push([Markup.button.callback('🔄 Recomeçar do início', 'corrigir_inicio')]);
-
-  if (['coletando_valores','coletando_nome','coletando_email','aguardando_comprovantes','aguardando_confirmacao_valor'].includes(estado)) {
-    botoes.push([Markup.button.callback('☑️ Alterar tokens selecionados', 'corrigir_tokens')]);
-  }
-
-  if (temValores && ['coletando_nome','coletando_email','aguardando_comprovantes','aguardando_confirmacao_valor'].includes(estado)) {
-    botoes.push([Markup.button.callback('💰 Alterar valores', 'corrigir_valores')]);
-  }
-
-  if ((temNome || temEmail) && ['coletando_email','aguardando_comprovantes','aguardando_confirmacao_valor'].includes(estado)) {
-    botoes.push([Markup.button.callback('👤 Alterar meus dados (nome/e-mail)', 'corrigir_dados')]);
-  }
-
-  botoes.push([Markup.button.callback('↩️ Continuar de onde estava', 'corrigir_cancelar')]);
-
-  await ctx.reply('Tudo bem! O que você gostaria de corrigir? 😊', Markup.inlineKeyboard(botoes));
+async function mostrarMenuCorrigir(ctx) {
+  await ctx.reply(
+    `Tudo bem! O que você gostaria de corrigir? 😊`,
+    Markup.inlineKeyboard([
+      [Markup.button.callback('🔄 Recomeçar', 'corrigir_inicio')],
+      [Markup.button.callback('☑️ Alterar tokens selecionados', 'corrigir_tokens')],
+      [Markup.button.callback('💰 Alterar valores', 'corrigir_valores')],
+      [Markup.button.callback('👤 Alterar meus dados (nome/e-mail)', 'corrigir_dados')],
+      [Markup.button.callback('Continuar de onde estava', 'corrigir_cancelar')],
+    ])
+  );
 }
 
 // ─── CONCLUIR O PROCESSO ─────────────────────────────────────
@@ -175,8 +168,7 @@ bot.on('callback_query', async (ctx) => {
   // ── Menu de correção ──
   if (data === 'menu_corrigir') {
     await ctx.answerCbQuery();
-    const session = await getSession(telegramId);
-    await mostrarMenuCorrigir(ctx, session);
+    await mostrarMenuCorrigir(ctx);
     return;
   }
 
@@ -221,7 +213,7 @@ bot.on('callback_query', async (ctx) => {
       token_valor_index: 0,
       valores_tokens: {},
     });
-    await pedirProximoValor(ctx, session.tokens_selecionados, 0);
+    await pedirProximoValor(ctx, session.tokens_selecionados, 0, null);
     return;
   }
 
@@ -262,7 +254,7 @@ bot.on('callback_query', async (ctx) => {
     }
     await ctx.answerCbQuery();
     await saveSession(telegramId, { estado: 'coletando_valores', token_valor_index: 0 });
-    await pedirProximoValor(ctx, selecionados, 0);
+    await pedirProximoValor(ctx, selecionados, 0, null);
     return;
   }
 
@@ -373,7 +365,7 @@ bot.on('text', async (ctx) => {
     await saveSession(telegramId, { valores_tokens: novosValores, token_valor_index: novoIndex });
 
     if (novoIndex < selecionados.length) {
-      await pedirProximoValor(ctx, selecionados, novoIndex);
+      await pedirProximoValor(ctx, selecionados, novoIndex, { valores_tokens: novosValores });
     } else {
       const totalDeclarado = Object.values(novosValores).reduce((a, b) => a + b, 0);
       await saveSession(telegramId, { estado: 'coletando_nome', valor_total_declarado: totalDeclarado });
