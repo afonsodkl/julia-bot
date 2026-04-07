@@ -493,6 +493,62 @@ bot.on('photo', async (ctx) => {
 
     const comprovantesExistentes = session.comprovantes || [];
 
+    // ── VERIFICAÇÃO: comprovante foi enviado para a conta correta ──
+    const nomeBenef  = (dadosOCR.nome_beneficiario || '').toUpperCase();
+    const cnpjBenef  = (dadosOCR.cnpj_beneficiario || '').replace(/\D/g, '');
+    const chaveDest  = (dadosOCR.chave_pix_destino  || '').replace(/\D/g, '');
+    const cnpjCorreto = DADOS_PAGAMENTO.cnpj.replace(/\D/g, '');
+
+    const contaCorreta =
+      nomeBenef.includes('BDM') ||
+      cnpjBenef === cnpjCorreto  ||
+      chaveDest === cnpjCorreto;
+
+    // Se beneficiário não foi identificado OU conta está errada → bloqueia
+    if (!dadosOCR.nome_beneficiario) {
+      await typing(ctx, 800);
+      await ctx.reply(
+        `⚠️ *Não consegui identificar o beneficiário neste comprovante.*
+
+` +
+        `Para garantir que o pagamento foi feito para a conta correta da BDM, ` +
+        `preciso que o comprovante mostre claramente o nome ou CNPJ de quem recebeu.
+
+` +
+        `Por favor, tire um *screenshot direto do aplicativo do banco* onde apareça o destinatário do pagamento. 🙏`,
+        { parse_mode: 'Markdown', ...btnCorrigirComExtra([[
+          Markup.button.callback('✅ Finalizei o envio dos comprovantes', 'finalizar_comprovantes')
+        ]]) }
+      );
+      return;
+    }
+
+    if (!contaCorreta) {
+      await typing(ctx, 800);
+      await ctx.reply(
+        `⚠️ *Este comprovante não é para a conta da BDM!*
+
+` +
+        `Identifiquei que o pagamento foi destinado a:
+` +
+        `*${dadosOCR.nome_beneficiario}*
+
+` +
+        `O pagamento deve ser feito para:
+` +
+        `🏢 *BDM SOLUCOES DIGITAIS LTDA*
+` +
+        `🔑 Chave PIX (CNPJ): \`43.007.754/0001-86\`
+
+` +
+        `Por favor, envie o comprovante correto. 🙏`,
+        { parse_mode: 'Markdown', ...btnCorrigirComExtra([[
+          Markup.button.callback('✅ Finalizei o envio dos comprovantes', 'finalizar_comprovantes')
+        ]]) }
+      );
+      return;
+    }
+
     // ── VERIFICAÇÃO DE DUPLICATA — 3 camadas ──────────────
     for (const comp of comprovantesExistentes) {
       const d = comp.dados || {};

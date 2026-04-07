@@ -41,6 +41,9 @@ Campos:
 - nome_pagador: string ou null
 - banco_origem: string ou null
 - codigo_transacao: string ou null
+- nome_beneficiario: nome de quem RECEBEU o pagamento, string ou null
+- cnpj_beneficiario: CNPJ de quem recebeu (apenas números e pontuação), string ou null
+- chave_pix_destino: chave PIX de destino se visível, string ou null
 
 Retorne APENAS o JSON válido. Sem texto, sem markdown.`
         }
