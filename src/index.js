@@ -50,6 +50,7 @@ function buildTokenKeyboard(selecionados = []) {
     )];
   });
   botoes.push([Markup.button.callback('▶️  Confirmar seleção', 'confirmar_tokens')]);
+  botoes.push([Markup.button.callback('✏️ Precisa corrigir algo?', 'menu_corrigir')]);
   return Markup.inlineKeyboard(botoes);
 }
 
@@ -94,19 +95,33 @@ async function pedirProximoValor(ctx, selecionados, index) {
   );
 }
 
-// ─── MENU DE CORREÇÃO ────────────────────────────────────────
+// ─── MENU DE CORREÇÃO (contextual por etapa) ─────────────────
 
-async function mostrarMenuCorrigir(ctx) {
-  await ctx.reply(
-    `Tudo bem! O que você gostaria de corrigir? 😊`,
-    Markup.inlineKeyboard([
-      [Markup.button.callback('🔄 Recomeçar', 'corrigir_inicio')],
-      [Markup.button.callback('☑️ Alterar tokens selecionados', 'corrigir_tokens')],
-      [Markup.button.callback('💰 Alterar valores', 'corrigir_valores')],
-      [Markup.button.callback('👤 Alterar meus dados (nome/e-mail)', 'corrigir_dados')],
-      [Markup.button.callback('Continuar de onde estava', 'corrigir_cancelar')],
-    ])
-  );
+async function mostrarMenuCorrigir(ctx, session) {
+  const estado = session?.estado || '';
+  const temValores = session?.valores_tokens && Object.keys(session.valores_tokens).length > 0;
+  const temNome    = !!session?.nome;
+  const temEmail   = !!session?.email_bdm;
+
+  const botoes = [];
+
+  botoes.push([Markup.button.callback('🔄 Recomeçar do início', 'corrigir_inicio')]);
+
+  if (['coletando_valores','coletando_nome','coletando_email','aguardando_comprovantes','aguardando_confirmacao_valor'].includes(estado)) {
+    botoes.push([Markup.button.callback('☑️ Alterar tokens selecionados', 'corrigir_tokens')]);
+  }
+
+  if (temValores && ['coletando_nome','coletando_email','aguardando_comprovantes','aguardando_confirmacao_valor'].includes(estado)) {
+    botoes.push([Markup.button.callback('💰 Alterar valores', 'corrigir_valores')]);
+  }
+
+  if ((temNome || temEmail) && ['coletando_email','aguardando_comprovantes','aguardando_confirmacao_valor'].includes(estado)) {
+    botoes.push([Markup.button.callback('👤 Alterar meus dados (nome/e-mail)', 'corrigir_dados')]);
+  }
+
+  botoes.push([Markup.button.callback('↩️ Continuar de onde estava', 'corrigir_cancelar')]);
+
+  await ctx.reply('Tudo bem! O que você gostaria de corrigir? 😊', Markup.inlineKeyboard(botoes));
 }
 
 // ─── CONCLUIR O PROCESSO ─────────────────────────────────────
@@ -161,7 +176,8 @@ bot.on('callback_query', async (ctx) => {
   // ── Menu de correção ──
   if (data === 'menu_corrigir') {
     await ctx.answerCbQuery();
-    await mostrarMenuCorrigir(ctx);
+    const session = await getSession(telegramId);
+    await mostrarMenuCorrigir(ctx, session);
     return;
   }
 
