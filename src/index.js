@@ -640,7 +640,7 @@ bot.on('photo', async (ctx) => {
     ];
     await saveSession(telegramId, { comprovantes: novosComprovantes, estado: 'aguardando_comprovantes' });
 
-    // ── Mostra soma parcial acumulada ──
+    // ── Soma parcial ──
     const somaAtual = novosComprovantes.reduce((acc, c) => acc + (parseFloat(c.dados?.valor) || 0), 0);
     const valorDeclarado = session.valor_total_declarado;
     const faltando = valorDeclarado - somaAtual;
@@ -650,19 +650,30 @@ bot.on('photo', async (ctx) => {
     const data  = dadosOCR.data  || 'Não identificada';
     const nComp = novosComprovantes.length;
 
-    let mensagemSoma = '';
-    if (faltando > 0) {
-      mensagemSoma = `\n\n*Soma até agora:* ${formatarValor(somaAtual)} de ${formatarValor(valorDeclarado)}\nAinda faltam *${formatarValor(faltando)}* em comprovantes.`;
-    } else if (faltando === 0) {
-      mensagemSoma = `\n\n✅ *Soma dos comprovantes bate com o valor declarado!* (${formatarValor(valorDeclarado)})`;
+    await typing(ctx, 800);
+
+    // ── Valor bateu → finaliza direto ──
+    if (faltando === 0) {
+      await ctx.reply(
+        `✅ *Comprovante ${nComp} recebido e verificado!*\n\n` +
+        `O que identifiquei:\n• Tipo: *${tipo}*\n• Valor: *${valor}*\n• Data: ${data}\n\n` +
+        `✅ *Valor total confirmado!* (${formatarValor(valorDeclarado)})\n\n` +
+        `Perfeito! Tudo certo por aqui. Finalizando seu registro... 🎉`,
+        { parse_mode: 'Markdown' }
+      );
+      // Busca sessão atualizada e finaliza
+      const sessionAtualizada = await getSession(telegramId);
+      await concluirProcesso(ctx, telegramId, sessionAtualizada);
+      return;
     }
 
-    await typing(ctx, 800);
+    // ── Valor ainda não bateu → aguarda mais comprovantes ──
     await ctx.reply(
       `✅ *Comprovante ${nComp} recebido e verificado!*\n\n` +
-      `O que identifiquei:\n• Tipo: *${tipo}*\n• Valor: *${valor}*\n• Data: ${data}` +
-      mensagemSoma +
-      `\n\nTem mais algum comprovante para enviar?\nSe sim, manda aí! Se não, clique no botão abaixo 👇`,
+      `O que identifiquei:\n• Tipo: *${tipo}*\n• Valor: *${valor}*\n• Data: ${data}\n\n` +
+      `📊 *Soma até agora:* ${formatarValor(somaAtual)} de ${formatarValor(valorDeclarado)}\n` +
+      `💡 Ainda faltam *${formatarValor(faltando)}* em comprovantes.\n\n` +
+      `Por favor, envie o(s) comprovante(s) restante(s). 👇`,
       {
         parse_mode: 'Markdown',
         ...btnCorrigirComExtra([[

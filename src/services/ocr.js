@@ -19,16 +19,20 @@ async function lerComprovante(fileUrl) {
   const base64 = buffer.toString('base64');
   const mediaType = detectImageType(buffer);
 
+  // Detecta se é PDF pelos magic bytes (%PDF)
+  const isPDF = buffer[0] === 0x25 && buffer[1] === 0x50 && buffer[2] === 0x44 && buffer[3] === 0x46;
+
+  const contentBlock = isPDF
+    ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } }
+    : { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } };
+
   const result = await client.messages.create({
     model: 'claude-opus-4-6',
     max_tokens: 800,
     messages: [{
       role: 'user',
       content: [
-        {
-          type: 'image',
-          source: { type: 'base64', media_type: mediaType, data: base64 }
-        },
+        contentBlock,
         {
           type: 'text',
           text: `Analise este comprovante de pagamento/transferência e extraia as informações abaixo em JSON.
