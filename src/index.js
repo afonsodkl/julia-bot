@@ -106,7 +106,7 @@ async function concluirProcesso(ctx, telegramId, session) {
     `━━━━━━━━━━━━━━━━━━━━━\n\n` +
     `Pode ficar tranquilo(a)! Tudo está em boas mãos. 🙏\n` +
     `Se precisar de qualquer coisa, é só me chamar ou falar com @juliadakila.\n\n` +
-    `Um grande abraço da equipe BDM! 💙`,
+    `Um grande abraço da equipe Allyance! 💜`,
     { parse_mode: 'Markdown' }
   );
 
