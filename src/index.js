@@ -50,7 +50,6 @@ function buildTokenKeyboard(selecionados = []) {
     )];
   });
   botoes.push([Markup.button.callback('▶️  Confirmar seleção', 'confirmar_tokens')]);
-  botoes.push([Markup.button.callback('✏️ Precisa corrigir algo?', 'menu_corrigir')]);
   return Markup.inlineKeyboard(botoes);
 }
 
