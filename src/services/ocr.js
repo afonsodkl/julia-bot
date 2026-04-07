@@ -10,7 +10,7 @@ async function lerComprovante(fileUrl) {
   const contentType = response.headers['content-type'] || 'image/jpeg';
 
   const result = await client.messages.create({
-    model: 'claude-opus-4-5',
+    model: 'claude-opus-4-6',
     max_tokens: 800,
     messages: [{
       role: 'user',
