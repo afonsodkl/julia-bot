@@ -63,13 +63,12 @@ async function enviarBoasVindas(ctx, telegramId) {
   await ctx.reply(
     `Olá! Seja muito bem-vindo(a)! 🍀\n\n` +
     `Sou a assistente virtual da *Allyance*. ` +
-    `Estou aqui para te ajudar a registrar sua participação com toda a segurança e praticidade. 💎\n\n` +
-    `Se você ainda possui dúvidas, pode entrar em contato com a @LucianaMultiplicadora. Para envios *internacionais*, entre em contato diretamente com @juliadakila.\n\n` +
-    `━━━━━━━━━━━━━━━━━━━━━\n` +
-    `📋 *Modalidades ativas:*\n${listaTokens}\n\n` +
-    `💡 As participações são feitas apenas em *múltiplos de R$100,00*, com valor mínimo de *R$100,00*.\n` +
+    `Estou aqui para te ajudar a registrar sua participação com toda a segurança e praticidade.\n\n` +
+    `Se você ainda possui dúvidas, entre em contato com a nossa consultora @LucianaMultiplicadora. Para envios *internacionais*, entre em contato diretamente com @juliadakila.\n\n` +
+    `📌 *Tokens disponíveis:*\n${listaTokens}\n\n` +
+    `As participações são feitas apenas em *múltiplos de 100*, com valor mínimo de *R$100,00*.\n` +
     `━━━━━━━━━━━━━━━━━━━━━\n\n` +
-    `Selecione abaixo em qual(is) modalidade(s) você deseja participar: 👇`,
+    `Selecione abaixo a sua participação (se desejar, poderá selecionar mais de um token para distribuir os valores): 👇`,
     { parse_mode: 'Markdown', ...buildTokenKeyboard([]) }
   );
 
@@ -104,11 +103,11 @@ async function mostrarMenuCorrigir(ctx) {
   await ctx.reply(
     `Tudo bem! O que você gostaria de corrigir? 😊`,
     Markup.inlineKeyboard([
-      [Markup.button.callback('🔄 Recomeçar tudo do início', 'corrigir_inicio')],
+      [Markup.button.callback('🔄 Recomeçar', 'corrigir_inicio')],
       [Markup.button.callback('☑️ Alterar tokens selecionados', 'corrigir_tokens')],
       [Markup.button.callback('💰 Alterar valores', 'corrigir_valores')],
       [Markup.button.callback('👤 Alterar meus dados (nome/e-mail)', 'corrigir_dados')],
-      [Markup.button.callback('❌ Cancelar (continuar de onde estava)', 'corrigir_cancelar')],
+      [Markup.button.callback('Continuar de onde estava', 'corrigir_cancelar')],
     ])
   );
 }
