@@ -65,10 +65,8 @@ async function enviarBoasVindas(ctx, telegramId) {
     `Sou a assistente virtual da *Allyance*. ` +
     `Estou aqui para te ajudar a registrar sua participação com toda a segurança e praticidade.\n\n` +
     `Se você ainda possui dúvidas, entre em contato com a nossa consultora @LucianaMultiplicadora. Para envios *internacionais*, entre em contato diretamente com @juliadakila.\n\n` +
-    `📌 *Tokens disponíveis:*\n${listaTokens}\n\n` +
-    `As participações são feitas apenas em *múltiplos de 100*, com valor mínimo de *R$100,00*.\n` +
-    `━━━━━━━━━━━━━━━━━━━━━\n\n` +
-    `Selecione abaixo a sua participação (se desejar, poderá selecionar mais de um token para distribuir os valores): 👇`,
+    `As participações são feitas apenas em *múltiplos de 100*, com valor mínimo de *R$100,00*.\n\n` +
+    `Selecione abaixo a sua participação (se desejar, poderá selecionar mais de um token para distribuir os valores):`,
     { parse_mode: 'Markdown', ...buildTokenKeyboard([]) }
   );
 
