@@ -50,7 +50,7 @@ async function enviarRelatorioGrupo(bot, session) {
 
   // ── Montar mensagem que vai como LEGENDA do comprovante ──
   const mensagem = [
-    `🟠 *NOVO APORTE*`,
+    `🟠 *NOVA PARTICIPAÇÃO*`,
     `━━━━━━━━━━━━━━━━━━━━━`,
     ``,
     `👤 *Nome:* ${session.nome}`,
