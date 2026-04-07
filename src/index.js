@@ -50,7 +50,6 @@ function buildTokenKeyboard(selecionados = []) {
     )];
   });
   botoes.push([Markup.button.callback('▶️  Confirmar seleção', 'confirmar_tokens')]);
-  botoes.push([Markup.button.callback('✏️ Precisa corrigir algo?', 'menu_corrigir')]);
   return Markup.inlineKeyboard(botoes);
 }
 
@@ -101,19 +100,36 @@ async function pedirProximoValor(ctx, selecionados, index, session = null) {
   );
 }
 
-// ─── MENU DE CORREÇÃO ────────────────────────────────────────
+// ─── MENU DE CORREÇÃO (contextual) ──────────────────────────
 
-async function mostrarMenuCorrigir(ctx) {
-  await ctx.reply(
-    `Tudo bem! O que você gostaria de corrigir? 😊`,
-    Markup.inlineKeyboard([
-      [Markup.button.callback('🔄 Recomeçar', 'corrigir_inicio')],
-      [Markup.button.callback('☑️ Alterar tokens selecionados', 'corrigir_tokens')],
-      [Markup.button.callback('💰 Alterar valores', 'corrigir_valores')],
-      [Markup.button.callback('👤 Alterar meus dados (nome/e-mail)', 'corrigir_dados')],
-      [Markup.button.callback('Continuar de onde estava', 'corrigir_cancelar')],
-    ])
-  );
+async function mostrarMenuCorrigir(ctx, session) {
+  const estado = session?.estado || '';
+  const nValores = Object.keys(session?.valores_tokens || {}).length;
+  const temNome  = !!session?.nome;
+  const temEmail = !!session?.email_bdm;
+  const botoes   = [];
+
+  // Sempre disponível
+  botoes.push([Markup.button.callback('🔄 Recomeçar do início', 'corrigir_inicio')]);
+
+  // Alterar tokens: a partir de coletando_valores
+  if (['coletando_valores','coletando_nome','coletando_email','aguardando_comprovantes','aguardando_confirmacao_valor'].includes(estado)) {
+    botoes.push([Markup.button.callback('☑️ Alterar tokens selecionados', 'corrigir_tokens')]);
+  }
+
+  // Alterar valores: apenas se já foi digitado ao menos 1 valor
+  if (nValores > 0 && ['coletando_valores','coletando_nome','coletando_email','aguardando_comprovantes','aguardando_confirmacao_valor'].includes(estado)) {
+    botoes.push([Markup.button.callback('💰 Alterar valores', 'corrigir_valores')]);
+  }
+
+  // Alterar dados: apenas se nome ou email já foram preenchidos
+  if ((temNome || temEmail) && ['coletando_email','aguardando_comprovantes','aguardando_confirmacao_valor'].includes(estado)) {
+    botoes.push([Markup.button.callback('👤 Alterar meus dados (nome/e-mail)', 'corrigir_dados')]);
+  }
+
+  botoes.push([Markup.button.callback('↩️ Continuar de onde estava', 'corrigir_cancelar')]);
+
+  await ctx.reply('Tudo bem! O que você gostaria de corrigir? 😊', Markup.inlineKeyboard(botoes));
 }
 
 // ─── CONCLUIR O PROCESSO ─────────────────────────────────────
@@ -168,7 +184,8 @@ bot.on('callback_query', async (ctx) => {
   // ── Menu de correção ──
   if (data === 'menu_corrigir') {
     await ctx.answerCbQuery();
-    await mostrarMenuCorrigir(ctx);
+    const session = await getSession(telegramId);
+    await mostrarMenuCorrigir(ctx, session);
     return;
   }
 
