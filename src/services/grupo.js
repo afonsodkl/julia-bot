@@ -4,7 +4,6 @@ function formatarValor(valor) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
 }
 
-// Tipos que precisam de sinalização especial no grupo
 const TIPOS_SINALIZADOS = ['TED', 'SAQUE INTERNO'];
 
 async function enviarRelatorioGrupo(bot, session) {
@@ -22,12 +21,11 @@ async function enviarRelatorioGrupo(bot, session) {
     }).join('\n');
   }
 
-  // ── Identificar tipos de pagamento dos comprovantes ──────
+  // ── Identificar tipos de pagamento ───────────────────────
   const tiposEncontrados = [...new Set(
     session.comprovantes.map(c => (c.dados?.tipo_pagamento || '').toUpperCase())
   )].filter(Boolean);
 
-  // Montar bloco de sinalização de pagamento
   let blocoTipoPagamento = '';
   const temTipoSinalizado = tiposEncontrados.some(t => TIPOS_SINALIZADOS.includes(t));
 
@@ -35,29 +33,28 @@ async function enviarRelatorioGrupo(bot, session) {
     const avisos = tiposEncontrados
       .filter(t => TIPOS_SINALIZADOS.includes(t))
       .map(t => {
-        if (t === 'TED')            return '🔴 *ATENÇÃO: Pagamento via TED*';
-        if (t === 'SAQUE INTERNO')  return '🟠 *ATENÇÃO: Pagamento via SAQUE INTERNO*';
+        if (t === 'TED')           return '🔴 *ATENÇÃO: Pagamento via TED*';
+        if (t === 'SAQUE INTERNO') return '🟠 *ATENÇÃO: Pagamento via SAQUE INTERNO*';
         return `⚠️ *ATENÇÃO: ${t}*`;
       }).join('\n');
-    blocoTipoPagamento = `\n${avisos}\n`;
+    blocoTipoPagamento = avisos;
   } else {
-    // PIX ou não identificado — apenas informa
     const tipos = tiposEncontrados.length > 0 ? tiposEncontrados.join(', ') : 'PIX';
-    blocoTipoPagamento = `\n💳 *Origem do pagamento:* ${tipos}\n`;
+    blocoTipoPagamento = `💳 *Origem do pagamento:* ${tipos}`;
   }
 
-  // ── Montar a mensagem final ──────────────────────────────
   const nComprovantes = session.comprovantes.length;
   const textoComprovantes = nComprovantes === 1
-    ? '1 comprovante'
-    : `${nComprovantes} comprovantes`;
+    ? '1 comprovante anexado'
+    : `${nComprovantes} comprovantes anexados`;
 
+  // ── Montar mensagem que vai como LEGENDA do comprovante ──
   const mensagem = [
-    `🟢 *NOVO APORTE REGISTRADO*`,
+    `🟠 *NOVO APORTE*`,
     `━━━━━━━━━━━━━━━━━━━━━`,
     ``,
     `👤 *Nome:* ${session.nome}`,
-    `📧 *E-mail BDM:* ${session.email_bdm}`,
+    `📧 *Conta BDM:* ${session.email_bdm}`,
     ``,
     `━━━━━━━━━━━━━━━━━━━━━`,
     `💼 *Modalidade(s):*`,
@@ -65,28 +62,38 @@ async function enviarRelatorioGrupo(bot, session) {
     ``,
     `💰 *Valor Total:* ${formatarValor(session.valor_total_declarado)}`,
     `━━━━━━━━━━━━━━━━━━━━━`,
-    blocoTipoPagamento.trim(),
+    blocoTipoPagamento,
     `━━━━━━━━━━━━━━━━━━━━━`,
-    `📎 ${textoComprovantes} anexado(s) abaixo`,
+    `📎 ${textoComprovantes}`,
     `🕐 *Recebido em:* ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`,
   ].join('\n');
 
-  // Envia a mensagem de texto
-  await bot.telegram.sendMessage(grupoId, mensagem, { parse_mode: 'Markdown' });
+  // ── Se for apenas 1 comprovante → mensagem como legenda ──
+  if (nComprovantes === 1) {
+    await bot.telegram.sendPhoto(grupoId, session.comprovantes[0].file_id, {
+      caption: mensagem,
+      parse_mode: 'Markdown'
+    });
+    return;
+  }
 
-  // Envia cada comprovante como foto
-  for (let i = 0; i < session.comprovantes.length; i++) {
+  // ── Se forem múltiplos → envia comprovantes avulsos primeiro, último com a legenda ──
+  for (let i = 0; i < nComprovantes; i++) {
     const comp = session.comprovantes[i];
-    const dados = comp.dados || {};
-    const legenda = [
-      `📎 Comprovante ${i + 1}/${session.comprovantes.length} — ${session.nome}`,
-      dados.tipo_pagamento ? `Tipo: ${dados.tipo_pagamento}` : '',
-      dados.valor         ? `Valor: ${formatarValor(dados.valor)}` : '',
-      dados.data          ? `Data: ${dados.data}` : '',
-      dados.codigo_transacao ? `Cód: ${dados.codigo_transacao}` : '',
-    ].filter(Boolean).join('\n');
+    const isUltimo = i === nComprovantes - 1;
 
-    await bot.telegram.sendPhoto(grupoId, comp.file_id, { caption: legenda });
+    if (isUltimo) {
+      // Último comprovante leva a mensagem completa como legenda
+      await bot.telegram.sendPhoto(grupoId, comp.file_id, {
+        caption: mensagem,
+        parse_mode: 'Markdown'
+      });
+    } else {
+      // Comprovantes anteriores vão com legenda simples
+      await bot.telegram.sendPhoto(grupoId, comp.file_id, {
+        caption: `📎 Comprovante ${i + 1}/${nComprovantes} — ${session.nome}`
+      });
+    }
   }
 }
 
