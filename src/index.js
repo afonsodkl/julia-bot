@@ -156,8 +156,8 @@ async function concluirProcesso(ctx, telegramId, session) {
     `📋 *Resumo da sua participação:*\n${modalidades}\n\n` +
     `💰 *Total:* ${formatarValor(session.valor_total_declarado)}\n` +
     `━━━━━━━━━━━━━━━━━━━━━\n\n` +
-    `Pode ficar tranquilo(a)! Tudo está em boas mãos. 🙏\n` +
-    `Se precisar de qualquer coisa, é só me chamar ou falar com @juliadakila.\n\n` +
+    `Pode ficar tranquilo(a)! Agora tudo está sendo encaminhado. O envio dos tokens ocorre em até 3 dias úteis.\n` +
+    `Se precisar de qualquer coisa, basta entrar em contato com qualquer um de nossos consultores.\n\n` +
     `Um grande abraço da equipe Allyance! 💜`,
     { parse_mode: 'Markdown' }
   );
@@ -315,9 +315,9 @@ bot.on('callback_query', async (ctx) => {
       await typing(ctx, 1000);
       await ctx.reply(
         `⚠️ *A soma dos comprovantes ainda não fecha o valor declarado.*\n\n` +
-        `💬 *Valor declarado:* ${formatarValor(valorDeclarado)}\n` +
-        `📄 *Soma até agora:* ${formatarValor(somaComprovantes)}\n` +
-        `📉 *Faltam:* ${formatarValor(faltando)}\n\n` +
+        `*Valor declarado:* ${formatarValor(valorDeclarado)}\n` +
+        `*Soma até agora:* ${formatarValor(somaComprovantes)}\n` +
+        `*Faltam:* ${formatarValor(faltando)}\n\n` +
         `Você tem mais algum comprovante para enviar?`,
         {
           parse_mode: 'Markdown',
@@ -426,9 +426,9 @@ bot.on('text', async (ctx) => {
     await ctx.reply(
       `Perfeito! ✅\n\nAgora envie o(s) *comprovante(s) de pagamento*. 📄\n\n` +
       `━━━━━━━━━━━━━━━━━━━━━\n` +
-      `🏢 *${empresa}*\n🏦 ${banco}\n` +
+      `🟠 *${empresa}*\n${banco}\n` +
       `Agência: \`${agencia}\`\nConta Corrente: \`${conta}\`\n` +
-      `🔑 *Chave PIX (CNPJ):* \`${chave_pix}\`\n` +
+      `*Chave PIX (CNPJ):* \`${chave_pix}\`\n` +
       `━━━━━━━━━━━━━━━━━━━━━\n\n` +
       `_Pode enviar mais de um comprovante caso tenha feito transferências em dias diferentes._\n\n` +
       `Quando terminar de enviar todos os comprovantes, clique no botão abaixo 👇`,
@@ -596,7 +596,7 @@ bot.on('photo', async (ctx) => {
 
     let mensagemSoma = '';
     if (faltando > 0) {
-      mensagemSoma = `\n\n📊 *Soma até agora:* ${formatarValor(somaAtual)} de ${formatarValor(valorDeclarado)}\n💡 Ainda faltam *${formatarValor(faltando)}* em comprovantes.`;
+      mensagemSoma = `\n\n*Soma até agora:* ${formatarValor(somaAtual)} de ${formatarValor(valorDeclarado)}\nAinda faltam *${formatarValor(faltando)}* em comprovantes.`;
     } else if (faltando === 0) {
       mensagemSoma = `\n\n✅ *Soma dos comprovantes bate com o valor declarado!* (${formatarValor(valorDeclarado)})`;
     }
