@@ -300,7 +300,7 @@ bot.on('callback_query', async (ctx) => {
       await ctx.reply(
         `⚠️ *A soma dos comprovantes está ACIMA do valor declarado!*\n\n` +
         `💬 *Valor declarado:* ${formatarValor(valorDeclarado)}\n` +
-        `🧾 *Soma dos comprovantes:* ${formatarValor(somaComprovantes)}\n` +
+        `📄 *Soma dos comprovantes:* ${formatarValor(somaComprovantes)}\n` +
         `📈 *Diferença:* ${formatarValor(diferenca)} a mais\n\n` +
         `Por favor, verifique os comprovantes enviados ou corrija o valor da participação.`,
         { parse_mode: 'Markdown', ...btnCorrigirComExtra([]) }
@@ -316,7 +316,7 @@ bot.on('callback_query', async (ctx) => {
       await ctx.reply(
         `⚠️ *A soma dos comprovantes ainda não fecha o valor declarado.*\n\n` +
         `💬 *Valor declarado:* ${formatarValor(valorDeclarado)}\n` +
-        `🧾 *Soma até agora:* ${formatarValor(somaComprovantes)}\n` +
+        `📄 *Soma até agora:* ${formatarValor(somaComprovantes)}\n` +
         `📉 *Faltam:* ${formatarValor(faltando)}\n\n` +
         `Você tem mais algum comprovante para enviar?`,
         {
@@ -424,7 +424,7 @@ bot.on('text', async (ctx) => {
     const { empresa, banco, agencia, conta, chave_pix } = DADOS_PAGAMENTO;
     await typing(ctx, 1500);
     await ctx.reply(
-      `Perfeito! ✅\n\nAgora envie o(s) *comprovante(s) de pagamento*. 📎\n\n` +
+      `Perfeito! ✅\n\nAgora envie o(s) *comprovante(s) de pagamento*. 📄\n\n` +
       `━━━━━━━━━━━━━━━━━━━━━\n` +
       `🏢 *${empresa}*\n🏦 ${banco}\n` +
       `Agência: \`${agencia}\`\nConta Corrente: \`${conta}\`\n` +
