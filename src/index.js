@@ -536,9 +536,9 @@ bot.on('photo', async (ctx) => {
 ` +
         `O pagamento deve ser feito para:
 ` +
-        `🏢 *BDM SOLUCOES DIGITAIS LTDA*
+        `*BDM SOLUCOES DIGITAIS LTDA*
 ` +
-        `🔑 Chave PIX (CNPJ): \`43.007.754/0001-86\`
+        `Chave PIX (CNPJ): \`43.007.754/0001-86\`
 
 ` +
         `Por favor, envie o comprovante correto. 🙏`,
