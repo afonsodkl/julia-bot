@@ -671,8 +671,8 @@ bot.on('photo', async (ctx) => {
     await ctx.reply(
       `✅ *Comprovante ${nComp} recebido e verificado!*\n\n` +
       `O que identifiquei:\n• Tipo: *${tipo}*\n• Valor: *${valor}*\n• Data: ${data}\n\n` +
-      `📊 *Soma até agora:* ${formatarValor(somaAtual)} de ${formatarValor(valorDeclarado)}\n` +
-      `💡 Ainda faltam *${formatarValor(faltando)}* em comprovantes.\n\n` +
+      `*Soma até agora:* ${formatarValor(somaAtual)} de ${formatarValor(valorDeclarado)}\n` +
+      `Ainda faltam *${formatarValor(faltando)}* em comprovantes.\n\n` +
       `Por favor, envie o(s) comprovante(s) restante(s). 👇`,
       {
         parse_mode: 'Markdown',
