@@ -708,7 +708,7 @@ bot.on('photo', async (ctx) => {
 
     await typing(ctx, 800);
 
-    // ── Valor bateu → finaliza direto ──
+    // ── Valor bateu exatamente → finaliza direto ──
     if (faltando === 0) {
       await ctx.reply(
         `✅ *Comprovante ${nComp} recebido e verificado!*\n\n` +
@@ -717,9 +717,31 @@ bot.on('photo', async (ctx) => {
         `Perfeito! Tudo certo por aqui. Finalizando seu registro... 🎉`,
         { parse_mode: 'Markdown' }
       );
-      // Busca sessão atualizada e finaliza
       const sessionAtualizada = await getSession(telegramId);
       await concluirProcesso(ctx, telegramId, sessionAtualizada);
+      return;
+    }
+
+    // ── Valor excedente → pergunta na hora ──
+    if (faltando < 0) {
+      const excedente = Math.abs(faltando);
+      await saveSession(telegramId, { soma_comprovantes_excedente: somaAtual });
+      await ctx.reply(
+        `✅ *Comprovante ${nComp} recebido e verificado!*\n\n` +
+        `O que identifiquei:\n• Tipo: *${tipo}*\n• Valor: *${valor}*\n• Data: ${data}\n\n` +
+        `⚠️ *Atenção: o valor enviado é maior do que o declarado.*\n\n` +
+        `💬 *Valor que você informou:* ${formatarValor(valorDeclarado)}\n` +
+        `📄 *Valor total dos comprovantes:* ${formatarValor(somaAtual)}\n` +
+        `📈 *Diferença:* ${formatarValor(excedente)} a mais\n\n` +
+        `O que você deseja fazer?`,
+        {
+          parse_mode: 'Markdown',
+          ...Markup.inlineKeyboard([
+            [Markup.button.callback(`✅ Manter participação em ${formatarValor(somaAtual)}`, 'excedente_atualizar')],
+            [Markup.button.callback(`↩️ Manter ${formatarValor(valorDeclarado)} e solicitar estorno de ${formatarValor(excedente)}`, 'excedente_estorno')],
+          ])
+        }
+      );
       return;
     }
 
