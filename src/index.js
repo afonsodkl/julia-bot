@@ -181,6 +181,53 @@ bot.on('callback_query', async (ctx) => {
   const telegramId = ctx.from.id;
   const data = ctx.callbackQuery.data;
 
+  // ── Excedente: manter valor atualizado ──
+  if (data === 'excedente_atualizar') {
+    await ctx.answerCbQuery();
+    const session = await getSession(telegramId);
+    const novoValor = session.soma_comprovantes_excedente;
+    await saveSession(telegramId, {
+      valor_total_declarado: novoValor,
+      estorno_necessario: false,
+      estado: 'finalizado',
+    });
+    await typing(ctx, 800);
+    await ctx.reply(
+      `✅ Perfeito! Sua participação será registrada no valor de *${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(novoValor)}*. Finalizando... 🎉`,
+      { parse_mode: 'Markdown' }
+    );
+    const sessionAtualizada = await getSession(telegramId);
+    await concluirProcesso(ctx, telegramId, { ...sessionAtualizada, valor_total_declarado: novoValor, estorno_necessario: false });
+    return;
+  }
+
+  // ── Excedente: manter valor original + solicitar estorno ──
+  if (data === 'excedente_estorno') {
+    await ctx.answerCbQuery();
+    const session = await getSession(telegramId);
+    const valorOriginal = session.valor_total_declarado;
+    const somaComp = session.soma_comprovantes_excedente;
+    const valorEstorno = somaComp - valorOriginal;
+    await saveSession(telegramId, {
+      estorno_necessario: true,
+      valor_estorno: valorEstorno,
+    });
+    await typing(ctx, 800);
+    await ctx.reply(
+      `✅ Entendido! Sua participação será registrada no valor original de *${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorOriginal)}*.
+
+` +
+      `Para receber o estorno de *${new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valorEstorno)}*, entre em contato com @juliadakila após a concretização da sua participação. 😊
+
+` +
+      `Finalizando seu registro...`,
+      { parse_mode: 'Markdown' }
+    );
+    const sessionAtualizada = await getSession(telegramId);
+    await concluirProcesso(ctx, telegramId, sessionAtualizada);
+    return;
+  }
+
   // ── Menu de correção ──
   if (data === 'menu_corrigir') {
     await ctx.answerCbQuery();
@@ -294,18 +341,27 @@ bot.on('callback_query', async (ctx) => {
     const valorDeclarado = session.valor_total_declarado;
     const diferenca = somaComprovantes - valorDeclarado;
 
-    // Soma maior que o declarado
+    // Soma maior que o declarado → perguntar se atualiza ou quer estorno
     if (somaComprovantes > 0 && diferenca > 0) {
+      await saveSession(telegramId, {
+        estado: 'aguardando_decisao_excedente',
+        soma_comprovantes_excedente: somaComprovantes,
+      });
       await typing(ctx, 1000);
       await ctx.reply(
-        `⚠️ *A soma dos comprovantes está ACIMA do valor declarado!*\n\n` +
-        `💬 *Valor declarado:* ${formatarValor(valorDeclarado)}\n` +
-        `📄 *Soma dos comprovantes:* ${formatarValor(somaComprovantes)}\n` +
+        `⚠️ *Atenção: o valor enviado é maior do que o declarado.*\n\n` +
+        `💬 *Valor que você informou:* ${formatarValor(valorDeclarado)}\n` +
+        `📄 *Valor total dos comprovantes:* ${formatarValor(somaComprovantes)}\n` +
         `📈 *Diferença:* ${formatarValor(diferenca)} a mais\n\n` +
-        `Por favor, verifique os comprovantes enviados ou corrija o valor da participação.`,
-        { parse_mode: 'Markdown', ...btnCorrigirComExtra([]) }
+        `O que você deseja fazer?`,
+        {
+          parse_mode: 'Markdown',
+          ...Markup.inlineKeyboard([
+            [Markup.button.callback(`✅ Manter participação em ${formatarValor(somaComprovantes)}`, 'excedente_atualizar')],
+            [Markup.button.callback(`↩️ Manter ${formatarValor(valorDeclarado)} e solicitar estorno de ${formatarValor(diferenca)}`, 'excedente_estorno')],
+          ])
+        }
       );
-      await saveSession(telegramId, { estado: 'aguardando_comprovantes' });
       return;
     }
 

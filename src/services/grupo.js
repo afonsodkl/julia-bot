@@ -48,6 +48,13 @@ async function enviarRelatorioGrupo(bot, session) {
     ? '1 comprovante anexado'
     : `${nComprovantes} comprovantes anexados`;
 
+  // ── Flag de estorno ──
+  const blocoEstorno = session.estorno_necessario
+    ? `
+🔴 *ESTORNO NECESSÁRIO: ${formatarValor(session.valor_estorno)}*
+_Cliente optou por manter participação no valor original. Aguarda estorno via @juliadakila._`
+    : '';
+
   // ── Montar mensagem que vai como LEGENDA do comprovante ──
   const mensagem = [
     `🟠 *NOVA PARTICIPAÇÃO*`,
@@ -66,6 +73,7 @@ async function enviarRelatorioGrupo(bot, session) {
     `━━━━━━━━━━━━━━━━━━━━━`,
     `📎 ${textoComprovantes}`,
     `🕐 *Recebido em:* ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`,
+    blocoEstorno,
   ].join('\n');
 
   // ── Se for apenas 1 comprovante → mensagem como legenda ──
